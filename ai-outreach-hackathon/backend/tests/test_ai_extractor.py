@@ -57,15 +57,16 @@ def test_extract_profile_returns_empty_profile_for_blank_context():
 
 
 def test_extract_profile_returns_empty_profile_when_llm_raises():
-    import anthropic
-    import httpx
+    from google.genai import errors as genai_errors
 
-    dummy_request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
-    with patch.object(
-        ai_extractor,
-        "call_llm",
-        side_effect=anthropic.APIError("boom", request=dummy_request, body=None),
-    ):
+    fake_error = genai_errors.APIError.__new__(genai_errors.APIError)
+    fake_error.code = 500
+    fake_error.message = "boom"
+    fake_error.status = "INTERNAL"
+    fake_error.response = None
+    Exception.__init__(fake_error, "boom")
+
+    with patch.object(ai_extractor, "call_llm", side_effect=fake_error):
         profile = extract_profile("Some real content about Acme Corp.", "https://acme.com")
     assert profile["company_name"] == ""
 

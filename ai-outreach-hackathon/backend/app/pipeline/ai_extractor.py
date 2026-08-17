@@ -1,7 +1,9 @@
 import json
 import re
 
-import anthropic
+from google import genai
+from google.genai import types as genai_types
+from google.genai import errors as genai_errors
 
 from .. import config
 from .schema import coerce_profile, empty_profile
@@ -29,13 +31,13 @@ Schema:
   "outreach_opener": string
 }"""
 
-_client: anthropic.Anthropic | None = None
+_client: genai.Client | None = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+        _client = genai.Client(api_key=config.GEMINI_API_KEY)
     return _client
 
 
@@ -81,14 +83,16 @@ def call_llm(context_text: str, source_url: str) -> str:
     client = _get_client()
     user_prompt = f"Target website: {source_url}\n\nSOURCE TEXT:\n{context_text}"
 
-    response = client.messages.create(
+    response = client.models.generate_content(
         model=config.MODEL_NAME,
-        max_tokens=config.MAX_OUTPUT_TOKENS,
-        temperature=0,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
+        contents=user_prompt,
+        config=genai_types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            max_output_tokens=config.MAX_OUTPUT_TOKENS,
+            temperature=0,
+        ),
     )
-    return "".join(block.text for block in response.content if block.type == "text")
+    return response.text or ""
 
 
 def extract_profile(context_text: str, source_url: str) -> dict:
@@ -97,7 +101,7 @@ def extract_profile(context_text: str, source_url: str) -> dict:
 
     try:
         raw_text = call_llm(context_text, source_url)
-    except anthropic.APIError:
+    except genai_errors.APIError:
         return empty_profile()
 
     parsed = _parse_json_response(raw_text)

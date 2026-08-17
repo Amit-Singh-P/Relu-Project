@@ -7,8 +7,8 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-MODEL_NAME = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
 DATA_FILE = Path(os.environ.get("DATA_FILE", str(BASE_DIR / "data" / "results.json")))
 
