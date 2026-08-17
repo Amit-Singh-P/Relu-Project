@@ -1,6 +1,6 @@
 const DEFAULT_API_BASE = window.location.origin.startsWith("file:")
   ? "http://localhost:8000"
-  : "https://YOUR-APP-NAME.onrender.com";
+  : "https://relu-project-1.onrender.com/";
 
 const STORAGE_KEY = "company-insight-api-base";
 
